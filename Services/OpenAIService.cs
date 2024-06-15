@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Linq;
 using ObsidianAssistant.Core.Models;
+using System.Collections.Generic;
 
 namespace ObsidianAssistant.Core.Services;
 
@@ -10,24 +11,14 @@ public class OpenAIService
 {
     private readonly MarkdownService _markdownService;
     private readonly OpenAIClient _openAIclient;
+    private List<Message> _conversationHistory;
 
     public OpenAIService(MarkdownService markdownService, OpenAIClient openAIClient)
     {            
         _markdownService = markdownService;
         _openAIclient = openAIClient;
-    }
-
-    public async Task<string> GetNoteSuggestionsAsync(string note)
-    {
-        if (string.IsNullOrWhiteSpace(note)) 
-            throw new ArgumentException("Note content cannot be null or empty", nameof(note));
-
-        var context = await RetrieveContextAsync(note);
-
-        var requestBody = new RequestOpenAI
-        {
-            messages = [
-                new() {
+        _conversationHistory = [
+            new() {
                     role = "system",
                     content = @$"You are an expert in using Obsidian for note-taking and knowledge management.             
 You are an expert in using Retrieval-Augmented Generation (RAG) within Obsidian for creating and managing notes. Your task is to help the user create detailed and well-formatted notes. For each note, you will:
@@ -77,17 +68,34 @@ Reinforcement Learning: Training algorithms through rewards and punishments.
 3. **Format with Markdown**: Apply appropriate markdown syntax to enhance readability.
 4. **Propose Tags**: Analyze the content and suggest relevant tags.
 5. **Suggest Associations**: Identify and recommend possible links to other related notes in the user's vault.
-Remember to keep the formatting clean and ensure the tags and associations are relevant to the content of the note."
-                },
-                new() {
+Remember to keep the formatting clean and ensure the tags and associations are relevant to the content of the note."}];
+    }
+
+    public async Task<string> GetNoteSuggestionsAsync(string note)
+    {
+        if (string.IsNullOrWhiteSpace(note)) 
+            throw new ArgumentException("Note content cannot be null or empty", nameof(note));
+
+        var context = await RetrieveContextAsync(note);
+
+        _conversationHistory.Add(
+            new() {
                     role = "user",
-                    content = $"I need your help to create a well-structured note, format it using Markdown, and propose relevant tags and possible associations with other notes. Here are the details of my note based on this context:\n\nContext: {context}\nNote: {note}"
-                }
-            ],
+                    content = $"I need your help to create a well-structured note, format it using Markdown, and propose relevant tags and possible associations with other notes. Here are the details of my note:\n{note}"
+                    //content = $"I need your help to create a well-structured note, format it using Markdown, and propose relevant tags and possible associations with other notes. Here are the details of my note based on this context:\n\nContext: {context}\nNote: {note}"
+                });
+
+        //si la conversacion es demasiado extensa voy eliminando los primeros mensajes pero la conversacion completa persiste en _conversationHistory
+        var conversationHistoryRequest = ChatHistoryService.TruncateHistory(_conversationHistory);
+
+        //ToDo: segun la nota enviada calcular el numero maximo de tokens
+        var requestBody = new RequestOpenAI
+        {
+            messages = conversationHistoryRequest,
             max_tokens = 1000,
-            temperature=0.7M,
-            n=1,
-            model="gpt-3.5-turbo"
+            temperature = 0.7M,
+            n = 1,
+            model = "gpt-3.5-turbo"
         };
 
         //Console.WriteLine(requestBody);
@@ -112,18 +120,9 @@ Remember to keep the formatting clean and ensure the tags and associations are r
 
     private async Task<string> RetrieveContextAsync(string note)
     {
+        //de todas las notas debo extraer los titulos, los links y los tags, ordenar por los mas frecuentes y los mas nuevos 
         var allNotes = await _markdownService.GetAllNotesAsync();
         var relevantNotes = allNotes.Where(n => note.Contains(n, StringComparison.OrdinalIgnoreCase)).Take(5);
         return string.Join("\n", relevantNotes);
-    }
-
-    private class OpenAIResponse
-    {
-        public Choice[] Choices { get; set; }
-    }
-
-    private class Choice
-    {
-        public string Text { get; set; }
     }
 }

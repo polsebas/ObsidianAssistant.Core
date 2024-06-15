@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using ObsidianAssistant.Core.Services;
+using ObsidianAssistant.Core.Models;
 
 namespace ObsidianAssistant.Core.Controllers
 {
@@ -24,12 +25,6 @@ namespace ObsidianAssistant.Core.Controllers
             await _markdownService.WriteNoteAsync(request.FileName, suggestions);
 
             return Ok(new { Message = "Note created successfully", Suggestions = suggestions });
-        }
-
-        public class NoteRequest
-        {
-            public string FileName { get; set; }
-            public string Note { get; set; }
         }
     }
 }

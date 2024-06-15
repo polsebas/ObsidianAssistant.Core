@@ -11,16 +11,18 @@ namespace ObsidianAssistant.Core.Services;
 public class OpenAIClient
 {
     private static readonly HttpClient client = new();
+    private readonly IConfiguration _configuration;
 
     public OpenAIClient(IConfiguration configuration)
     {
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", configuration["OpenAI:ApiKey"]);
+        _configuration = configuration;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _configuration["OpenAI:ApiKey"]);
     }
 
     public async Task<string> GetResponseAsync(RequestOpenAI requestOpenAI)
     {
         var jsonRequestBody = JsonConvert.SerializeObject(requestOpenAI);
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions")
+        var request = new HttpRequestMessage(HttpMethod.Post, _configuration["OpenAI:UrlChat"])
         {
             Content = new StringContent(jsonRequestBody, Encoding.UTF8, "application/json")
         };
