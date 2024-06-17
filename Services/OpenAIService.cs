@@ -19,8 +19,8 @@ public class OpenAIService
         _openAIclient = openAIClient;
         _conversationHistory = [
             new() {
-                    role = "system",
-                    content = @$"You are an expert in using Obsidian for note-taking and knowledge management.             
+                    Role = "system",
+                    Content = @$"You are an expert in using Obsidian for note-taking and knowledge management.             
 You are an expert in using Retrieval-Augmented Generation (RAG) within Obsidian for creating and managing notes. Your task is to help the user create detailed and well-formatted notes. For each note, you will:
 1. **Create a well-structured note**: Ensure the note is organized with headings, bullet points, and any other necessary markdown formatting.
 2. **Format the note using Markdown**: Include headings, subheadings, bullet points, numbered lists, bold and italic text, code blocks, and any other relevant markdown syntax to make the note clear and easy to read.
@@ -80,8 +80,8 @@ Remember to keep the formatting clean and ensure the tags and associations are r
 
         _conversationHistory.Add(
             new() {
-                    role = "user",
-                    content = $"I need your help to create a well-structured note, format it using Markdown, and propose relevant tags and possible associations with other notes. Here are the details of my note:\n{note}"
+                    Role = "user",
+                    Content = $"I need your help to create a well-structured note, format it using Markdown, and propose relevant tags and possible associations with other notes. Here are the details of my note:\n{note}"
                     //content = $"I need your help to create a well-structured note, format it using Markdown, and propose relevant tags and possible associations with other notes. Here are the details of my note based on this context:\n\nContext: {context}\nNote: {note}"
                 });
 
@@ -98,17 +98,15 @@ Remember to keep the formatting clean and ensure the tags and associations are r
             model = "gpt-3.5-turbo"
         };
 
-        //Console.WriteLine(requestBody);
-
         try
         {
             var response = await _openAIclient.GetResponseAsync(requestBody);
-            var result = JsonSerializer.Deserialize<OpenAIResponse>(response);
+            var result = JsonSerializer.Deserialize<ResponseOpenAI>(response);
 
-            if (result == null || result.Choices == null || result.Choices.Length == 0)
+            if (result == null || result.Choices == null || result.Choices.Count == 0)
                 throw new InvalidOperationException("Invalid response received from OpenAI API");
 
-            return result.Choices[0].Text;
+            return result.Choices[0].Message.Content;
         }
         catch (Exception ex)
         {

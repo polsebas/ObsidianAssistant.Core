@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using ObsidianAssistant.Core.Services;
-
+//"UrlChat": "https://api.openai.com/v1/chat/completions"
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
