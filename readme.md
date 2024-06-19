@@ -40,6 +40,33 @@ ObsidianAssistant.Core/
     ├── OpenAIClient.cs
     └── OpenAIService.cs
 ```
+ObsidianAssistant.Core/
+│
+├── appsettings.Development.json
+├── appsettings.json
+├── docker-compose.yml
+├── ObsidianAssistant.Core.csproj
+├── ObsidianAssistant.Core.sln
+├── Program.cs
+│
+├── Controllers/
+│   └── NotesController.cs
+│
+├── Models/
+│   ├── EmbeddingsModels.cs
+│   ├── MilvusModels.cs
+│   ├── NoteRequest.cs
+│   ├── RequestOpenAI.cs
+│   └── ResponseOpenAI.cs
+│
+└── Services/
+    ├── ChatHistoryService.cs
+    ├── MarkdownService.cs
+    ├── MilvusService.cs
+    ├── NoteMonitoringService.cs
+    ├── OpenAIClient.cs
+    └── OpenAIService.cs
+
 
 ## Prerequisites
 
