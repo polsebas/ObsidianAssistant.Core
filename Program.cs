@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using ObsidianAssistant.Core.Services;
-//"UrlChat": "https://api.openai.com/v1/chat/completions"
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -14,10 +14,13 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "ObsidianAssistant API", Version = "v1" });
 });
 
+
 builder.Services.AddSingleton<OpenAIService>();
 builder.Services.AddSingleton(provider =>
     new MarkdownService(builder.Configuration["MarkdownDirectory"]));
 builder.Services.AddSingleton<OpenAIClient>();
+builder.Services.AddSingleton<MilvusService>();
+builder.Services.AddHostedService<NoteMonitoringService>();
 
 var app = builder.Build();
 

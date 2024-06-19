@@ -100,7 +100,7 @@ Remember to keep the formatting clean and ensure the tags and associations are r
 
         try
         {
-            var response = await _openAIclient.GetResponseAsync(requestBody);
+            var response = await _openAIclient.GetChatResponseAsync(requestBody);
             var result = JsonSerializer.Deserialize<ResponseOpenAI>(response);
 
             if (result == null || result.Choices == null || result.Choices.Count == 0)
@@ -122,5 +122,18 @@ Remember to keep the formatting clean and ensure the tags and associations are r
         var allNotes = await _markdownService.GetAllNotesAsync();
         var relevantNotes = allNotes.Where(n => note.Contains(n, StringComparison.OrdinalIgnoreCase)).Take(5);
         return string.Join("\n", relevantNotes);
+    }
+
+    public async Task<float[]> GetEmbeddingAsync(string text)
+    {
+        var request = new RequestEmdeddingOpenAI
+        {
+            text = text,
+            model = "text-embedding-ada-002"
+        };
+        var responseContent = await _openAIclient.GetEmbeddingResponseAsync(request);
+        var result = JsonSerializer.Deserialize<ResponseEmdeddingOpenAI>(responseContent);
+
+        return result.Embedding;
     }
 }

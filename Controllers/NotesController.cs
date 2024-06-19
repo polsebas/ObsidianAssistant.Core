@@ -11,20 +11,37 @@ namespace ObsidianAssistant.Core.Controllers
     {
         private readonly OpenAIService _openAIService;
         private readonly MarkdownService _markdownService;
+        private readonly MilvusService _milvusService;
 
-        public NotesController(OpenAIService openAIService, MarkdownService markdownService)
+        public NotesController(OpenAIService openAIService, MarkdownService markdownService, MilvusService milvusService)
         {
             _openAIService = openAIService;
             _markdownService = markdownService;
+            _milvusService = milvusService;
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateNoteAsync([FromBody] NoteRequest request)
         {
-            var suggestions = await _openAIService.GetNoteSuggestionsAsync(request.Note);
-            await _markdownService.WriteNoteAsync(request.FileName, suggestions);
+            var embedding = await _openAIService.GetEmbeddingAsync(request.Note);
 
-            return Ok(new { Message = "Note created successfully", Suggestions = suggestions });
+            var folder = await DetermineFolder(embedding);
+            var filePath = $"{folder}/{request.FileName}.md";
+
+            await _markdownService.WriteNoteAsync(filePath, request.Note);
+            await _milvusService.InsertEmbeddingAsync("notes_collection", embedding);
+
+            return Ok(new { Message = "Note created successfully", Folder = folder });
+        
+        }
+
+        private async Task<string> DetermineFolder(float[] embedding)
+        {
+            var results = await _milvusService.SearchEmbeddingAsync("notes_collection", embedding, 1);
+            // Logic to determine folder based on search results
+            // For simplicity, return the folder of the closest note
+            // In a real scenario, you might need more complex logic
+            return results.Count > 0 ? "found_folder" : "default";
         }
     }
 }
